@@ -117,14 +117,17 @@ app.get("/", async (_request, reply) => {
 });
 
 
-app.get("/panel", async (_request, reply) => {
-  return reply.type("text/html; charset=utf-8").send(`<!doctype html>
+const panelHtml = `<!doctype html>
 <html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Painel | Zailom Pay</title>
 <style>
 :root{color-scheme:dark;font-family:Inter,ui-sans-serif,system-ui;background:#090b10;color:#f4f6fb}
 *{box-sizing:border-box}body{margin:0;min-height:100vh;background:radial-gradient(ellipse at 15% 0%,#17332e 0,transparent 42%),#090b10}
-main{width:min(1120px,100%);margin:auto;padding:28px 22px}.brand{color:#8ee3c1;font-size:12px;font-weight:800;letter-spacing:.18em;text-transform:uppercase}
+main{width:auto;max-width:1440px;margin-left:258px;padding:28px 34px;transition:margin-left .22s ease}
+.sidebar{position:fixed;z-index:30;inset:0 auto 0 0;width:238px;padding:22px 14px;background:#0d141b;border-right:1px solid #26313b;display:flex;flex-direction:column;transition:width .22s ease,transform .22s ease}
+.side-brand{display:flex;align-items:center;gap:11px;padding:4px 7px 30px}.brand-mark{display:grid;place-items:center;width:38px;height:38px;border-radius:12px;background:#8ee3c1;color:#092019;font-weight:900;font-size:20px}.side-brand-text{display:flex;flex-direction:column;gap:2px;flex:1}.side-brand-text strong{font-size:13px;letter-spacing:.13em}.side-brand-text small{font-size:10px;letter-spacing:.2em;color:#8ee3c1}.icon-btn{background:#1b2731;color:#dbe5eb;padding:7px 11px;font-size:19px}.side-label{font-size:10px;letter-spacing:.15em;color:#728092;padding:0 12px 12px}#mainNav{display:flex;flex-direction:column;gap:6px}.navBtn{display:flex;align-items:center;gap:13px;width:100%;padding:12px;border:1px solid transparent;border-radius:11px;background:transparent;color:#aab6c4;text-align:left;font-weight:600}.navBtn:hover{background:#18252b;color:#eff8f4}.navBtn.active{background:#17332e;border-color:#285344;color:#a7efd5}.nav-icon{width:22px;text-align:center;font-size:19px}.side-footer{margin-top:auto;padding:14px 12px;color:#8e9baa;font-size:12px;border-top:1px solid #26313b}.status-dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:#6de0b4;margin-right:9px}
+body.collapsed .sidebar{width:76px}body.collapsed main{margin-left:76px}body.collapsed .side-brand-text,body.collapsed .side-label,body.collapsed .nav-text,body.collapsed .side-footer{display:none}body.collapsed .side-brand{justify-content:center;flex-wrap:wrap;padding:4px 0 30px}body.collapsed .icon-btn{margin-top:8px}body.collapsed .navBtn{justify-content:center;padding:13px 6px}
+.mobile-shade{display:none}.brand{color:#8ee3c1;font-size:12px;font-weight:800;letter-spacing:.18em;text-transform:uppercase}
 header{display:flex;align-items:center;justify-content:space-between;padding:14px 0 30px;gap:16px}h1{font-size:clamp(30px,5vw,46px);letter-spacing:-.05em;margin:12px 0}h2{font-size:18px;margin:0 0 16px}p{color:#a8b0c0;line-height:1.6}
 .card{border:1px solid #252d38;border-radius:20px;background:#111720;padding:26px;max-width:460px;margin:7vh auto}
 input{width:100%;padding:14px;margin:7px 0 13px;border-radius:10px;border:1px solid #35404d;background:#0b1017;color:#fff;font:inherit}
@@ -136,15 +139,18 @@ button.secondary{background:#202a35;color:#e7edf5}.muted{color:#94a0b1;font-size
 .pill{display:inline-flex;padding:6px 9px;border-radius:999px;background:#332b19;color:#f2d49a;font-size:12px}
 .table-wrap{overflow:auto}table{width:100%;border-collapse:collapse;text-align:left;font-size:14px}th,td{padding:13px 10px;border-bottom:1px solid #252d38;white-space:nowrap}th{color:#94a0b1;font-weight:600}td{color:#e7edf5}.empty{padding:22px;color:#94a0b1;text-align:center}
 .hidden{display:none}.identity{margin-top:24px}.refresh{font-size:13px;color:#8ee3c1}
-@media(max-width:560px){main{padding:18px 14px}header{padding-bottom:20px}.tile,.section{padding:17px}}
-</style></head><body><main>
-<header><div><div class="brand">Zailom Financial</div><div class="muted">Console administrativo</div></div><button id="logout" class="secondary hidden">Sair</button></header>
+header{justify-content:flex-start}#menuToggle{display:none;margin-right:8px}
+@media(max-width:760px){main,body.collapsed main{margin-left:0;padding:16px 14px}header{padding:10px 0 22px}#menuToggle{display:inline-flex}.sidebar,body.collapsed .sidebar{width:270px;transform:translateX(-100%)}body.mobile-open .sidebar{transform:translateX(0)}body.mobile-open .mobile-shade{display:block;position:fixed;inset:0;background:#0009;z-index:20}body.collapsed .side-brand-text,body.collapsed .side-label,body.collapsed .nav-text,body.collapsed .side-footer{display:initial}body.collapsed .side-brand{justify-content:flex-start}body.collapsed .navBtn{justify-content:flex-start;padding:12px}#collapseSide{display:none}}
+@media(min-width:761px){#menuToggle{display:none}}
+@media(max-width:560px){.tile,.section{padding:17px}.section-head{align-items:flex-start;flex-wrap:wrap}.section-head button{width:100%}.card{padding:22px;margin:4vh auto}}
+</style></head><body><div id="mobileShade" class="mobile-shade"></div><aside id="sidebar" class="sidebar hidden"><div class="side-brand"><span class="brand-mark">Z</span><div class="side-brand-text"><strong>ZAILOM</strong><small>FINANCIAL</small></div><button id="collapseSide" class="icon-btn" aria-label="Recolher menu">‹</button></div><div class="side-label">MENU PRINCIPAL</div><nav id="mainNav"><button class="navBtn" data-page="overview"><span class="nav-icon">⌂</span><span class="nav-text">Visão geral</span></button><button class="navBtn" data-page="organizations"><span class="nav-icon">▦</span><span class="nav-text">Empresas</span></button><button class="navBtn" data-page="participants"><span class="nav-icon">♙</span><span class="nav-text">Participantes</span></button><button class="navBtn" data-page="recipients"><span class="nav-icon">◇</span><span class="nav-text">Beneficiários</span></button></nav><div class="side-footer"><span class="status-dot"></span><span class="nav-text">Ambiente seguro</span></div></aside><main>
+<header><button id="menuToggle" class="secondary" aria-label="Abrir menu">☰</button><div><div class="brand">Zailom Financial</div><div class="muted">Console administrativo</div></div><button id="logout" class="secondary hidden">Sair</button></header>
 <section id="login" class="card"><div class="brand">Acesso restrito</div><h1>Entrar no Pay</h1><p>Use as credenciais administrativas configuradas para esta instância.</p>
 <form id="loginForm"><label for="email">E-mail</label><input id="email" type="email" autocomplete="username" required>
 <label for="password">Senha</label><input id="password" type="password" autocomplete="current-password" required>
 <button type="submit">Entrar</button><div id="error" class="error" role="alert"></div></form></section>
 <section id="dashboard" class="hidden">
-<div class="brand">Visão geral</div><h1>Bem-vindo, <span id="name">administrador</span>.</h1><nav id="mainNav" class="hidden" style="gap:8px;flex-wrap:wrap;margin:12px 0 22px"><button class="secondary navBtn" data-page="overview">Visão geral</button><button class="secondary navBtn" data-page="organizations">Empresas</button><button class="secondary navBtn" data-page="participants">Participantes</button><button class="secondary navBtn" data-page="recipients">Beneficiários</button></nav>
+<div class="brand">Visão geral</div><h1>Bem-vindo, <span id="name">administrador</span>.</h1>
 <p>Resumo operacional do ecossistema financeiro Zailom.</p>
 <div class="section-head"><span class="pill">Modo seguro · movimentação real desativada</span><span class="refresh" id="updated"></span></div>
 <div class="grid">
@@ -179,9 +185,12 @@ logout.addEventListener("click",async function(){await api("/api/v1/auth/logout"
 api("/api/v1/auth/me").then(function(result){show(result.user)}).catch(function(){});
 
 const pageMap={overview:"dashboard",organizations:"organizationsPage",participants:"participantsPage",recipients:"recipientsPage"};
-function goPage(p){Object.entries(pageMap).forEach(([k,id])=>document.getElementById(id).classList.toggle("hidden",k!==p));if(p==="organizations")loadOrgs();if(p==="participants")loadParticipants();if(p==="recipients"){loadRecipients();loadParticipantChoices()}}
-const showLogin=show;show=function(u){showLogin(u);document.querySelector("#mainNav").classList.remove("hidden");goPage("overview")};
+const routeMap={overview:"/panel",organizations:"/panel/empresas",participants:"/panel/participantes",recipients:"/panel/beneficiarios"};
+function pageFromPath(){const path=location.pathname;return path.endsWith("/empresas")?"organizations":path.endsWith("/participantes")?"participants":path.endsWith("/beneficiarios")?"recipients":"overview"}
+function goPage(p,writeHistory=true){if(!pageMap[p])p="overview";Object.entries(pageMap).forEach(([k,id])=>document.getElementById(id).classList.toggle("hidden",k!==p));document.querySelectorAll(".navBtn").forEach(b=>b.classList.toggle("active",b.dataset.page===p));if(writeHistory&&location.pathname!==routeMap[p])history.pushState({page:p},"",routeMap[p]);document.title=({overview:"Visão geral",organizations:"Empresas",participants:"Participantes",recipients:"Beneficiários"}[p])+" | Zailom Pay";document.body.classList.remove("mobile-open");if(p==="organizations")loadOrgs();if(p==="participants")loadParticipants();if(p==="recipients"){loadRecipients();loadParticipantChoices()}}
+const showLogin=show;show=function(u){showLogin(u);document.querySelector("#sidebar").classList.remove("hidden");goPage(pageFromPath(),false)};
 document.querySelectorAll(".navBtn").forEach(b=>b.onclick=()=>goPage(b.dataset.page));
+document.querySelector("#menuToggle").onclick=()=>document.body.classList.toggle("mobile-open");document.querySelector("#mobileShade").onclick=()=>document.body.classList.remove("mobile-open");document.querySelector("#collapseSide").onclick=()=>document.body.classList.toggle("collapsed");window.addEventListener("popstate",()=>{if(!dashboard.classList.contains("hidden"))goPage(pageFromPath(),false)});
 function formData(f){return Object.fromEntries(new FormData(f).entries())}
 async function loadOrgs(){const d=await api("/api/v1/admin/organizations");document.querySelector("#orgRows").innerHTML=d.organizations.map(o=>"<tr><td>"+escapeHtml(o.trade_name||o.legal_name)+"</td><td>"+escapeHtml(o.tax_id||"—")+"</td><td>"+o.participant_count+"</td><td>"+o.status+"</td><td><button class='secondary' data-org='"+o.id+"' data-status='"+o.status+"'>"+(o.status==="active"?"Inativar":"Ativar")+"</button></td></tr>").join("")||'<tr><td colspan="5" class="empty">Nenhuma empresa cadastrada.</td></tr>';document.querySelectorAll("[data-org]").forEach(b=>b.onclick=async()=>{await api("/api/v1/admin/organizations/"+b.dataset.org,{method:"PATCH",body:JSON.stringify({status:b.dataset.status==="active"?"inactive":"active"})});loadOrgs()})}
 document.querySelector("#newOrg").onclick=()=>document.querySelector("#orgForm").classList.toggle("hidden");document.querySelector("#orgReload").onclick=loadOrgs;document.querySelector("#orgForm").onsubmit=async e=>{e.preventDefault();try{await api("/api/v1/admin/organizations",{method:"POST",body:JSON.stringify(formData(e.target))});e.target.reset();e.target.classList.add("hidden");loadOrgs()}catch(x){alert(x.message)}};
@@ -191,8 +200,9 @@ document.querySelector("#newParticipant").onclick=async()=>{await loadOrgChoices
 async function loadParticipantChoices(){const d=await api("/api/v1/admin/participants");document.querySelector("#recipientSelect").innerHTML='<option value="">Selecione</option>'+d.participants.map(p=>"<option value='"+p.id+"'>"+escapeHtml(p.display_name)+"</option>").join("")}
 async function loadRecipients(){const d=await api("/api/v1/admin/provider-recipients");document.querySelector("#recipientRows").innerHTML=d.recipients.map(r=>"<tr><td>"+escapeHtml(r.participant_name)+"</td><td>"+escapeHtml(r.provider_code)+"</td><td>"+escapeHtml(r.external_recipient_id||"—")+"</td><td>"+escapeHtml(r.onboarding_status)+"</td><td>"+escapeHtml(r.kyc_status)+"</td></tr>").join("")||'<tr><td colspan="5" class="empty">Nenhum beneficiário vinculado.</td></tr>'}
 document.querySelector("#recipientReload").onclick=loadRecipients;document.querySelector("#recipientForm").onsubmit=async e=>{e.preventDefault();const d=formData(e.target),id=d.participantId;delete d.participantId;if(!d.externalRecipientId)delete d.externalRecipientId;try{await api("/api/v1/admin/participants/"+id+"/provider-recipient",{method:"PUT",body:JSON.stringify(d)});e.target.reset();e.target.elements.providerCode.value="z2pay";loadRecipients()}catch(x){alert(x.message)}};
-</script></body></html>`);
-});
+</script></body></html>`;
+app.get("/panel", async (_request, reply) => reply.type("text/html; charset=utf-8").send(panelHtml));
+app.get("/panel/:page", async (_request, reply) => reply.type("text/html; charset=utf-8").send(panelHtml));
 
 app.get("/health", async (_request, reply) => {
   try {
