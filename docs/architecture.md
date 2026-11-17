@@ -12,6 +12,14 @@
 - **Reconciliation:** comparação entre eventos, transações, saldos e repasses do provedor.
 - **Product API:** integração autenticada para Booking, Flow, Orbit e outros produtos.
 
+## Banco de dados e infraestrutura
+
+- PostgreSQL 16 em container Docker próprio no VPS, com imagem `postgres:16-alpine`, seguindo o padrão operacional do Orbit.
+- Banco, usuário, senha, volume e container exclusivos do Zailom Pay; não compartilhar instância nem credenciais com Orbit.
+- Backend do Zailom Pay acessa o PostgreSQL pela rede privada Docker. Não expor a porta do banco publicamente.
+- Não utilizar Supabase, Supabase Auth, Edge Functions, RLS ou tipos/funções exclusivos do Supabase.
+- Autenticação e autorização da API serão implementadas no backend; a estratégia de identidade entre produtos será definida antes dos endpoints de produção.
+
 ## Modelo de integração
 
 Produtos Zailom -> API Zailom Pay -> domínio financeiro/ledger -> adaptador do provedor -> infraestrutura financeira contratada.
