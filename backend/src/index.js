@@ -17,7 +17,11 @@ const host = process.env.HOST ?? "0.0.0.0";
 const appOrigin = new URL(process.env.APP_ORIGIN ?? "http://localhost:5173").origin;
 const apiPublicUrl = process.env.API_PUBLIC_URL ?? "http://localhost:3001";
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
+  host: process.env.PGHOST ?? "localhost",
+  port: Number(process.env.PGPORT ?? 5432),
+  user: process.env.PGUSER,
+  password: process.env.PGPASSWORD,
+  database: process.env.PGDATABASE,
   max: 10,
   idleTimeoutMillis: 30_000,
   connectionTimeoutMillis: 5_000,
@@ -25,12 +29,12 @@ const pool = new Pool({
 
 async function runMigrations() {
   const currentDir = dirname(fileURLToPath(import.meta.url));
-  const migrationPath = resolve(currentDir, "../../database/migrations/001_financial_foundation.sql");
+  const migrationPath = resolve(currentDir, "../database/migrations/001_financial_foundation.sql");
   const migrationSql = await readFile(migrationPath, "utf8");
   const client = await pool.connect();
 
   try {
-    await client.query("SELECT pg_advisory_lock($1)", [7319041701]);
+    await client.query("SELECT pg_advisory_lock($1::bigint)", [7319041701]);
     await client.query(`
       CREATE TABLE IF NOT EXISTS public.zp_schema_migrations (
         version text PRIMARY KEY,
@@ -63,7 +67,7 @@ async function runMigrations() {
     }
   } finally {
     try {
-      await client.query("SELECT pg_advisory_unlock($1)", [7319041701]);
+      await client.query("SELECT pg_advisory_unlock($1::bigint)", [7319041701]);
     } finally {
       client.release();
     }
