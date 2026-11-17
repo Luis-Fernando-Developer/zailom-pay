@@ -91,6 +91,11 @@ export async function registerFeeManagementRoutes(app, pool) {
         const found = await client.query("select count(*)::int as total from public.zp_organizations where id=any($1::uuid[]) and status='active'", [ids]);
         if (found.rows[0].total !== ids.length) { await client.query("rollback"); return reply.code(400).send({error:"Uma ou mais empresas não existem ou estão inativas."}); }
       }
+      await client.query(`delete from public.zp_fee_group_members m
+        using public.zp_fee_groups old_group, public.zp_fee_groups target_group
+        where m.group_id=old_group.id and target_group.id=$1
+          and old_group.product_id=target_group.product_id
+          and old_group.id<>target_group.id and m.organization_id=any($2::uuid[])`, [groupId,ids]);
       await client.query("delete from public.zp_fee_group_members where group_id=$1", [groupId]);
       for (const id of ids) await client.query("insert into public.zp_fee_group_members(group_id,organization_id) values($1,$2)", [groupId,id]);
       await client.query("insert into public.zp_auth_audit(user_id,event_type,metadata) values($1,'fee_group_members_updated',$2::jsonb)", [user.id,JSON.stringify({groupId,organizationIds:ids})]);
