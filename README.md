@@ -60,9 +60,28 @@ O arquivo .env.example documenta as variáveis. Em Portainer, cadastre os valore
 - [x] Rotas iniciais /, /health e /api/v1/status.
 - [x] Autenticação administrativa inicial com sessão HttpOnly e bootstrap do superadmin.
 - [ ] Autorização granular e isolamento multi-tenant.
+- [x] Painel administrativo em /panel com indicadores reais do PostgreSQL.
+- [x] API administrativa protegida por sessão para visão geral.
+- [x] API inicial do ledger: contas contábeis, consulta de lançamentos e postagem balanceada.
+- [x] Idempotência de lançamentos e bloqueio de alteração/exclusão do histórico contabilizado.
+- [x] Plano de contas compartilhado inicial em BRL.
 - [ ] Serviços de pagamentos, distribuição, recebíveis e saques.
 - [ ] Simulador de provedor e adaptador Z2PAY.
-- [x] Casca inicial do painel administrativo em /panel.
-- [ ] Painel financeiro completo e integração com Booking.
+- [ ] Integração com Booking.
 
-O painel inicial já possui login administrativo. A API ainda não movimenta dinheiro nem integra com a Z2PAY. As operações financeiras serão implementadas em etapas, com autorização, idempotência e confirmação de liquidação pelo provedor.
+O painel já consulta indicadores reais do banco. A API do ledger permite registrar lançamentos contábeis internos balanceados, com idempotência e histórico imutável. Isso não inicia pagamentos, não cria saldo sacável e não movimenta dinheiro. A integração com provedores, liquidação, distribuição e saques permanece desativada até que os fluxos contratuais e técnicos sejam definidos.
+
+
+## API administrativa inicial
+
+Todas as rotas abaixo exigem sessão autenticada. Escritas no ledger exigem perfil `superadmin` ou `admin`.
+
+- `GET /api/v1/admin/overview` — indicadores operacionais.
+- `GET /api/v1/admin/ledger/accounts` — plano de contas.
+- `POST /api/v1/admin/ledger/accounts` — cria conta contábil.
+- `GET /api/v1/admin/ledger/transactions` — consulta lançamentos contabilizados.
+- `POST /api/v1/admin/ledger/transactions` — registra uma transação contábil balanceada.
+
+O endpoint de transações exige `productCode`, `eventType`, `idempotencyKey` e pelo menos dois lançamentos. Cada lançamento informa `accountId`, `direction` (`debit` ou `credit`), `amountMinor` (centavos inteiros) e `currency`. Débitos e créditos devem fechar por moeda. Reutilizar uma chave de idempotência com conteúdo diferente retorna conflito HTTP 409.
+
+O plano de contas inicial cria contas compartilhadas em BRL para valores a liquidar pelo provedor, valores devidos aos participantes, receita de tarifas, despesas de tarifas e reembolsos a pagar. Essas contas são apenas estrutura contábil; não representam dinheiro custodiado ou disponível.
