@@ -20,11 +20,11 @@ export async function registerWalletRoutes(app, pool) {
       select a.account_code, a.account_name, a.account_type,
         coalesce(sum(case
           when t.id is not null and e.direction = 'debit' then e.amount_minor
-          else -e.amount_minor
+          else 0
         end), 0)::text as debit_balance,
         coalesce(sum(case
           when t.id is not null and e.direction = 'credit' then e.amount_minor
-          else -e.amount_minor
+          else 0
         end), 0)::text as credit_balance
       from public.zp_ledger_accounts a
       left join public.zp_ledger_entries e on e.account_id = a.id
