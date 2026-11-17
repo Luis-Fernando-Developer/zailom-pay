@@ -31,7 +31,7 @@ Núcleo financeiro do ecossistema Zailom. O objetivo é centralizar regras finan
 - Não utilizar Supabase, Supabase Auth, Edge Functions ou recursos específicos do Supabase.
 - Backend Fastify em Node.js 22, conectado ao PostgreSQL por rede privada Docker.
 - O PostgreSQL não publica porta no host; apenas a API acessa o banco pela rede interna.
-- A rede externa zailomOrbit_net é usada para comunicação com o Traefik. A rede pay_data_net mantém o banco isolado.
+- A rede externa zailom_pay_net é usada para comunicação com o Traefik. A rede pay_data_net mantém o banco isolado.
 - O Compose cria volume persistente exclusivo zailom_pay_postgres_data.
 
 ## Endereços
@@ -44,9 +44,10 @@ Núcleo financeiro do ecossistema Zailom. O objetivo é centralizar regras finan
 1. Configure no DNS os dois hosts acima apontando para o proxy/servidor já utilizado pela Zailom.
 2. No Portainer, crie a stack a partir deste repositório.
 3. Defina POSTGRES_PASSWORD como uma senha longa, aleatória e exclusiva da instância Pay.
-4. Confirme que a rede Docker externa zailomOrbit_net existe e está conectada ao Traefik.
-5. Faça o deploy. A API aplica a migração SQL versionada no primeiro start e expõe /health para healthcheck.
-6. Não publique a porta 5432 do PostgreSQL.
+4. Confirme que a rede Docker externa zailom_pay_net existe e está conectada ao Traefik.
+5. Configure ADMIN_EMAIL, ADMIN_PASSWORD (mínimo de 14 caracteres) e ADMIN_NAME nas variáveis da stack. Use uma senha exclusiva e guarde-a em local seguro.
+6. Faça o deploy. A API aplica a migração SQL versionada no primeiro start e expõe /health para healthcheck.
+7. Não publique a porta 5432 do PostgreSQL.
 
 O arquivo .env.example documenta as variáveis. Em Portainer, cadastre os valores como variáveis da stack; não envie o arquivo real de segredos ao Git.
 
@@ -57,9 +58,11 @@ O arquivo .env.example documenta as variáveis. Em Portainer, cadastre os valore
 - [x] API Fastify inicial e healthcheck com verificação do banco.
 - [x] Aplicação automática da migração financeira inicial.
 - [x] Rotas iniciais /, /health e /api/v1/status.
-- [ ] Autenticação, autorização e isolamento multi-tenant.
+- [x] Autenticação administrativa inicial com sessão HttpOnly e bootstrap do superadmin.
+- [ ] Autorização granular e isolamento multi-tenant.
 - [ ] Serviços de pagamentos, distribuição, recebíveis e saques.
 - [ ] Simulador de provedor e adaptador Z2PAY.
-- [ ] Painel financeiro e integração com Booking.
+- [x] Casca inicial do painel administrativo em /panel.
+- [ ] Painel financeiro completo e integração com Booking.
 
-A API inicial ainda não movimenta dinheiro nem integra com a Z2PAY. O próximo passo é construir autenticação e os serviços financeiros sobre esta fundação.
+O painel inicial já possui login administrativo. A API ainda não movimenta dinheiro nem integra com a Z2PAY. As operações financeiras serão implementadas em etapas, com autorização, idempotência e confirmação de liquidação pelo provedor.
