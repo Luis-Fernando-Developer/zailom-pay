@@ -107,6 +107,7 @@ app.get("/", async (_request, reply) => {
     <h1>Zailom Pay</h1>
     <p>A infraestrutura financeira do ecossistema Zailom. O núcleo da API está no ar; o painel e os módulos financeiros serão construídos sobre esta base.</p>
     <div class="status"><span class="dot"></span> Serviço inicial ativo</div>
+    <p><a href="/panel" style="color:#8ee3c1;font-weight:700;text-decoration:none">Acessar painel administrativo →</a></p>
   </main>
 </body>
 </html>`);
