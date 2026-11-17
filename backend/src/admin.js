@@ -1,6 +1,8 @@
+import { getCurrentUser } from "./auth.js";
+
 export async function registerAdminRoutes(app, pool) {
   app.get("/api/v1/admin/overview", async (request, reply) => {
-    const user = await app.authGetCurrentUser(pool, request);
+    const user = await getCurrentUser(pool, request);
     if (!user) {
       return reply.code(401).send({ error: "Autenticação necessária." });
     }
