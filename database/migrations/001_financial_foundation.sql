@@ -1,7 +1,6 @@
 -- Zailom Pay: financial foundation (standalone PostgreSQL 16)
 -- All monetary amounts are integer minor units (e.g. centavos).
--- This migration intentionally exposes no direct client policies; financial writes
--- must go through trusted backend functions using the service role.
+-- Financial writes are performed only by the trusted backend.
 
 create extension if not exists pgcrypto;
 
