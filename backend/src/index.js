@@ -144,7 +144,7 @@ button.secondary{background:#202a35;color:#e7edf5}.muted{color:#94a0b1;font-size
 <label for="password">Senha</label><input id="password" type="password" autocomplete="current-password" required>
 <button type="submit">Entrar</button><div id="error" class="error" role="alert"></div></form></section>
 <section id="dashboard" class="hidden">
-<div class="brand">Visão geral</div><h1>Bem-vindo, <span id="name">administrador</span>.</h1><nav id="mainNav" class="hidden" style="display:flex;gap:8px;flex-wrap:wrap;margin:12px 0 22px"><button class="secondary navBtn" data-page="overview">Visão geral</button><button class="secondary navBtn" data-page="organizations">Empresas</button><button class="secondary navBtn" data-page="participants">Participantes</button><button class="secondary navBtn" data-page="recipients">Beneficiários</button></nav>
+<div class="brand">Visão geral</div><h1>Bem-vindo, <span id="name">administrador</span>.</h1><nav id="mainNav" class="hidden" style="gap:8px;flex-wrap:wrap;margin:12px 0 22px"><button class="secondary navBtn" data-page="overview">Visão geral</button><button class="secondary navBtn" data-page="organizations">Empresas</button><button class="secondary navBtn" data-page="participants">Participantes</button><button class="secondary navBtn" data-page="recipients">Beneficiários</button></nav>
 <p>Resumo operacional do ecossistema financeiro Zailom.</p>
 <div class="section-head"><span class="pill">Modo seguro · movimentação real desativada</span><span class="refresh" id="updated"></span></div>
 <div class="grid">
