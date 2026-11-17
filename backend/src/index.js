@@ -257,6 +257,7 @@ try {
   await registerLedgerRoutes(app, pool);
   await registerEntityRoutes(app, pool);
   await registerWalletRoutes(app, pool);
+  await registerFeeRoutes(app, pool);
   await app.listen({ port, host });
 } catch (error) {
   app.log.error({ err: error }, "Failed to start Zailom Pay");
