@@ -117,7 +117,7 @@ app.get("/", async (_request, reply) => {
 
 
 app.get("/panel", async (_request, reply) => {
-  return reply.type("text/html; charset=utf-8").send(\`<!doctype html>
+  return reply.type("text/html; charset=utf-8").send(`<!doctype html>
 <html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Painel | Zailom Pay</title>
 <style>
@@ -174,7 +174,7 @@ document.querySelector("#recentRows").innerHTML=rows||'<tr><td colspan="4" class
 document.querySelector("#loginForm").addEventListener("submit",async function(event){event.preventDefault();error.textContent="";try{const result=await api("/api/v1/auth/login",{method:"POST",body:JSON.stringify({email:document.querySelector("#email").value,password:document.querySelector("#password").value})});show(result.user)}catch(err){error.textContent=err.message}});
 logout.addEventListener("click",async function(){await api("/api/v1/auth/logout",{method:"POST"});dashboard.classList.add("hidden");login.classList.remove("hidden");logout.classList.add("hidden")});
 api("/api/v1/auth/me").then(function(result){show(result.user)}).catch(function(){});
-</script></body></html>\`);
+</script></body></html>`);
 });
 
 app.get("/health", async (_request, reply) => {
