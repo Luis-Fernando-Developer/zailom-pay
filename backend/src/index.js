@@ -7,6 +7,7 @@ import { dirname, resolve } from "node:path";
 import { bootstrapAdmin, registerAuthRoutes } from "./auth.js";
 import { registerAdminRoutes } from "./admin.js";
 import { registerLedgerRoutes } from "./ledger.js";
+import { registerEntityRoutes } from "./entities.js";
 
 const { Pool } = pg;
 const app = Fastify({
@@ -208,6 +209,7 @@ try {
   await registerAuthRoutes(app, pool);
   await registerAdminRoutes(app, pool);
   await registerLedgerRoutes(app, pool);
+  await registerEntityRoutes(app, pool);
   await app.listen({ port, host });
 } catch (error) {
   app.log.error({ err: error }, "Failed to start Zailom Pay");
