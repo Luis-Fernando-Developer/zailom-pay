@@ -19,11 +19,11 @@ export async function registerWalletRoutes(app, pool) {
     const result = await pool.query(`
       select a.account_code, a.account_name, a.account_type,
         coalesce(sum(case
-          when e.direction = 'debit' then e.amount_minor
+          when t.id is not null and e.direction = 'debit' then e.amount_minor
           else -e.amount_minor
         end), 0)::text as debit_balance,
         coalesce(sum(case
-          when e.direction = 'credit' then e.amount_minor
+          when t.id is not null and e.direction = 'credit' then e.amount_minor
           else -e.amount_minor
         end), 0)::text as credit_balance
       from public.zp_ledger_accounts a
