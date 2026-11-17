@@ -22,7 +22,7 @@ create index if not exists zp_fee_group_members_org_idx
 
 -- Enforce one active commercial group per organization and product.
 create or replace function public.zp_assert_fee_group_membership_unique()
-returns trigger language plpgsql as $
+returns trigger language plpgsql as $function$
 declare v_product_id uuid;
 begin
   select product_id into v_product_id from public.zp_fee_groups where id = new.group_id and active = true;
@@ -37,7 +37,7 @@ begin
   end if;
   return new;
 end;
-$;
+$function$;
 drop trigger if exists zp_fee_group_membership_unique on public.zp_fee_group_members;
 create trigger zp_fee_group_membership_unique
 before insert or update on public.zp_fee_group_members
