@@ -63,8 +63,21 @@ export async function bootstrapAdmin(pool, log) {
     log.warn("ADMIN_EMAIL/ADMIN_PASSWORD não configurados; bootstrap administrativo ignorado");
     return;
   }
+
+  // Do not re-hash the bootstrap password on every container restart.
+  // The account is intentionally not overwritten after its first creation.
+  const existing = await pool.query(
+    "select id from public.zp_auth_users where lower(email) = $1 limit 1",
+    [email],
+  );
+  if (existing.rowCount > 0) {
+    log.info({ email }, "Usuário superadmin inicial já existe; credenciais preservadas");
+    return;
+  }
+
   if (password.length < 14) {
-    throw new Error("ADMIN_PASSWORD precisa ter pelo menos 14 caracteres");
+    log.error("ADMIN_PASSWORD precisa ter pelo menos 14 caracteres; usuário inicial não foi criado");
+    return;
   }
 
   const passwordHash = await hashPassword(password);
@@ -72,11 +85,15 @@ export async function bootstrapAdmin(pool, log) {
   const result = await pool.query(
     `insert into public.zp_auth_users (email, password_hash, display_name, role)
      values ($1, $2, $3, 'superadmin')
-     on conflict (lower(email)) do nothing
+     on conflict do nothing
      returning id`,
     [email, passwordHash, displayName],
   );
-  if (result.rowCount) log.info({ email }, "Usuário superadmin inicial criado");
+  if (result.rowCount) {
+    log.info({ email }, "Usuário superadmin inicial criado");
+  } else {
+    log.info({ email }, "Usuário superadmin inicial já existe; nenhuma alteração realizada");
+  }
 }
 
 export async function getCurrentUser(pool, request) {
