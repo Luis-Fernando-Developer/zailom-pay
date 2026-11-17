@@ -48,7 +48,7 @@ export async function registerFeeManagementRoutes(app, pool) {
     if (!await admin(pool, request, reply)) return;
     const [groups, overrides] = await Promise.all([
       pool.query(`select g.id,g.name,g.description,g.active,p.code as product_code,
-        count(m.id)::int as member_count
+        count(m.id)::int as member_count,\n        coalesce(array_agg(m.organization_id) filter (where m.id is not null), '{}'::uuid[]) as organization_ids
         from public.zp_fee_groups g join public.zp_products p on p.id=g.product_id
         left join public.zp_fee_group_members m on m.group_id=g.id
         group by g.id,p.code order by p.code,g.name`),
