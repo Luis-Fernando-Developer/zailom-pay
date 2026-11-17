@@ -1,0 +1,69 @@
+services:
+  pay:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: zailom-pay:latest
+    container_name: zailom-pay
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: 3001
+      HOST: 0.0.0.0
+      TRUST_PROXY: "true"
+      APP_ORIGIN: ${APP_ORIGIN:-https://pay.zailom.com}
+      API_PUBLIC_URL: ${API_PUBLIC_URL:-https://api-pay.zailom.com}
+      DATABASE_URL: postgresql://${POSTGRES_USER:-zailom_pay}:${POSTGRES_PASSWORD:?Configure POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-zailom_pay}
+    networks:
+      - zailomOrbit_net
+      - pay_data_net
+    depends_on:
+      postgres:
+        condition: service_healthy
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=zailomOrbit_net
+      - traefik.http.routers.zailom-pay.rule=Host(`pay.zailom.com`)
+      - traefik.http.routers.zailom-pay.entrypoints=websecure
+      - traefik.http.routers.zailom-pay.tls=true
+      - traefik.http.routers.zailom-pay.service=zailom-pay
+      - traefik.http.routers.zailom-pay-api.rule=Host(`api-pay.zailom.com`)
+      - traefik.http.routers.zailom-pay-api.entrypoints=websecure
+      - traefik.http.routers.zailom-pay-api.tls=true
+      - traefik.http.routers.zailom-pay-api.service=zailom-pay
+      - traefik.http.services.zailom-pay.loadbalancer.server.port=3001
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3001/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: zailom-pay-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-zailom_pay}
+      POSTGRES_DB: ${POSTGRES_DB:-zailom_pay}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Configure POSTGRES_PASSWORD}
+    volumes:
+      - zailom_pay_postgres_data:/var/lib/postgresql/data
+    networks:
+      - pay_data_net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$$${POSTGRES_USER}\" -d \"$$${POSTGRES_DB}\""]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  zailom_pay_postgres_data:
+
+networks:
+  # Rede externa compartilhada com o Traefik, no padrão já usado pelo Orbit.
+  zailomOrbit_net:
+    external: true
+  # Rede privada: somente API e PostgreSQL do Pay.
+  pay_data_net:
+    internal: true
