@@ -104,7 +104,7 @@ app.get("/", async (_request, reply) => {
     p { color: #a8b0c0; line-height: 1.65; }
     .status { display: inline-flex; align-items: center; gap: 9px; margin-top: 18px; padding: 9px 12px; border-radius: 999px; background: #142c27; color: #a7efd5; font-size: 13px; }
     .dot { width: 7px; height: 7px; border-radius: 50%; background: #6de0b4; }
-  </style>
+  .checkline{display:flex;align-items:center;gap:10px;margin:14px 0;color:#c4ced9}.checkline input[type="checkbox"]{width:18px;min-width:18px;min-height:18px;height:18px;margin:0;accent-color:#8ee3c1}\n</style>
 </head>
 <body>
   <main>
