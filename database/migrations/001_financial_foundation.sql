@@ -143,6 +143,46 @@ create table if not exists public.zp_ledger_entries (
 create index if not exists zp_ledger_entries_transaction_idx on public.zp_ledger_entries (transaction_id);
 create index if not exists zp_ledger_entries_account_created_idx on public.zp_ledger_entries (account_id, created_at desc);
 
+create or replace function public.zp_prevent_posted_entry_mutation()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $
+declare
+  v_old_status public.zp_transaction_status;
+  v_new_status public.zp_transaction_status;
+begin
+  if tg_op in ('UPDATE', 'DELETE') then
+    select status into v_old_status
+    from public.zp_ledger_transactions
+    where id = old.transaction_id;
+
+    if v_old_status in ('posted', 'reversed') then
+      raise exception 'Entries from posted ledger transactions are immutable';
+    end if;
+  end if;
+
+  if tg_op in ('INSERT', 'UPDATE') then
+    select status into v_new_status
+    from public.zp_ledger_transactions
+    where id = new.transaction_id;
+
+    if v_new_status in ('posted', 'reversed') then
+      raise exception 'Cannot add or move entries into a posted ledger transaction';
+    end if;
+    return new;
+  end if;
+
+  return old;
+end;
+$;
+
+drop trigger if exists zp_ledger_entries_immutable on public.zp_ledger_entries;
+create trigger zp_ledger_entries_immutable
+before insert or update or delete on public.zp_ledger_entries
+for each row execute function public.zp_prevent_posted_entry_mutation();
+
 create or replace function public.zp_assert_posted_transaction_balanced()
 returns trigger
 language plpgsql
