@@ -13,7 +13,11 @@ services:
       TRUST_PROXY: "true"
       APP_ORIGIN: ${APP_ORIGIN:-https://pay.zailom.com}
       API_PUBLIC_URL: ${API_PUBLIC_URL:-https://api-pay.zailom.com}
-      DATABASE_URL: postgresql://${POSTGRES_USER:-zailom_pay}:${POSTGRES_PASSWORD:?Configure POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-zailom_pay}
+      PGHOST: postgres
+      PGPORT: 5432
+      PGUSER: ${POSTGRES_USER:-zailom_pay}
+      PGPASSWORD: ${POSTGRES_PASSWORD:?Configure POSTGRES_PASSWORD}
+      PGDATABASE: ${POSTGRES_DB:-zailom_pay}
     networks:
       - zailomOrbit_net
       - pay_data_net
