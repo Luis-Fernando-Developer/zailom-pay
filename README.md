@@ -29,17 +29,37 @@ Núcleo financeiro do ecossistema Zailom. O objetivo é centralizar regras finan
 - PostgreSQL 16 em container Docker próprio no VPS, seguindo o padrão utilizado pelo Zailom Orbit.
 - Instância, volume, credenciais e ciclo de vida independentes do Orbit: Zailom Pay terá seu próprio banco e usuário de banco.
 - Não utilizar Supabase, Supabase Auth, Edge Functions ou recursos específicos do Supabase.
-- Backend próprio conectado ao PostgreSQL por rede privada Docker.
+- Backend Fastify em Node.js 22, conectado ao PostgreSQL por rede privada Docker.
+- O PostgreSQL não publica porta no host; apenas a API acessa o banco pela rede interna.
+- A rede externa zailomOrbit_net é usada para comunicação com o Traefik. A rede pay_data_net mantém o banco isolado.
+- O Compose cria volume persistente exclusivo zailom_pay_postgres_data.
 
-## Primeira fase
+## Endereços
 
-- Definir arquitetura e contratos internos.
-- Criar schema SQL do ledger e entidades financeiras.
-- Criar API/backend com autenticação, autorização e idempotência.
-- Implementar simulador de provedor para testes.
-- Implementar adaptador Z2PAY após validar documentação e credenciais.
-- Integrar primeiro ao Zailom Booking.
+- Painel: https://pay.zailom.com
+- API: https://api-pay.zailom.com
+
+## Deploy inicial
+
+1. Configure no DNS os dois hosts acima apontando para o proxy/servidor já utilizado pela Zailom.
+2. No Portainer, crie a stack a partir deste repositório.
+3. Defina POSTGRES_PASSWORD como uma senha longa, aleatória e exclusiva da instância Pay.
+4. Confirme que a rede Docker externa zailomOrbit_net existe e está conectada ao Traefik.
+5. Faça o deploy. A API aplica a migração SQL versionada no primeiro start e expõe /health para healthcheck.
+6. Não publique a porta 5432 do PostgreSQL.
+
+O arquivo .env.example documenta as variáveis. Em Portainer, cadastre os valores como variáveis da stack; não envie o arquivo real de segredos ao Git.
 
 ## Estado atual
 
-Repositório recém-criado. A estrutura de aplicação e as migrações PostgreSQL serão adicionadas em etapas, após validar a base técnica e os contratos internos.
+- [x] Base de deploy Docker/Portainer.
+- [x] PostgreSQL 16 isolado, com volume persistente.
+- [x] API Fastify inicial e healthcheck com verificação do banco.
+- [x] Aplicação automática da migração financeira inicial.
+- [x] Rotas iniciais /, /health e /api/v1/status.
+- [ ] Autenticação, autorização e isolamento multi-tenant.
+- [ ] Serviços de pagamentos, distribuição, recebíveis e saques.
+- [ ] Simulador de provedor e adaptador Z2PAY.
+- [ ] Painel financeiro e integração com Booking.
+
+A API inicial ainda não movimenta dinheiro nem integra com a Z2PAY. O próximo passo é construir autenticação e os serviços financeiros sobre esta fundação.
