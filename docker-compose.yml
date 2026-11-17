@@ -19,14 +19,14 @@ services:
       PGPASSWORD: ${POSTGRES_PASSWORD:?Configure POSTGRES_PASSWORD}
       PGDATABASE: ${POSTGRES_DB:-zailom_pay}
     networks:
-      - zailomOrbit_net
+      - zailom_pay_net
       - pay_data_net
     depends_on:
       postgres:
         condition: service_healthy
     labels:
       - traefik.enable=true
-      - traefik.docker.network=zailomOrbit_net
+      - traefik.docker.network=zailom_pay_net
       - traefik.http.routers.zailom-pay.rule=Host(`pay.zailom.com`)
       - traefik.http.routers.zailom-pay.entrypoints=websecure
       - traefik.http.routers.zailom-pay.tls=true
@@ -65,7 +65,7 @@ volumes:
   zailom_pay_postgres_data:
 
 networks:
-  zailomOrbit_net:
+  zailom_pay_net:
     external: true
   pay_data_net:
     internal: true
