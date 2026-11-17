@@ -243,7 +243,7 @@ export async function registerLedgerRoutes(app, pool) {
            from public.zp_products p
           where p.code = $1 and p.active = true
          on conflict (idempotency_key) do nothing
-         returning id, status, idempotency_key`,
+         returning id, status, idempotency_key, product_id`,
         [
           productCode, organizationId, eventType, idempotencyKey,
           sourceType, sourceId, description,
@@ -269,13 +269,23 @@ export async function registerLedgerRoutes(app, pool) {
       }
 
       const transaction = inserted.rows[0];
+      if (organizationId !== null) {
+        const organization = await client.query(
+          "select id from public.zp_organizations where id = $1 and status = 'active'",
+          [organizationId],
+        );
+        if (!organization.rowCount) throw new Error("Empresa não encontrada ou inativa.");
+      }
       for (const entry of body.entries) {
         const account = await client.query(
-          "select id, currency, active from public.zp_ledger_accounts where id = $1 for share",
+          "select id, currency, active, product_id from public.zp_ledger_accounts where id = $1 for share",
           [entry.accountId],
         );
         if (!account.rowCount || !account.rows[0].active) {
           throw new Error("Conta contábil inexistente ou inativa: " + entry.accountId);
+        }
+        if (account.rows[0].product_id && account.rows[0].product_id !== transaction.product_id) {
+          throw new Error("A conta contábil pertence a outro produto: " + entry.accountId);
         }
         if (account.rows[0].currency !== entry.currency) {
           throw new Error("A moeda do lançamento não corresponde à moeda da conta " + entry.accountId);
@@ -310,7 +320,7 @@ export async function registerLedgerRoutes(app, pool) {
       return reply.code(201).send({ transaction: posted.rows[0], alreadyProcessed: false });
     } catch (error) {
       await client.query("ROLLBACK");
-      if (error.message?.startsWith("Conta contábil") || error.message?.startsWith("A moeda")) {
+      if (error.message?.startsWith("Conta contábil") || error.message?.startsWith("A conta contábil") || error.message?.startsWith("A moeda") || error.message?.startsWith("Empresa")) {
         return reply.code(400).send({ error: error.message });
       }
       throw error;
