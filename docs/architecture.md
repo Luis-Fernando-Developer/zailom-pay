@@ -12,13 +12,29 @@
 - **Reconciliation:** comparação entre eventos, transações, saldos e repasses do provedor.
 - **Product API:** integração autenticada para Booking, Flow, Orbit e outros produtos.
 
-## Banco de dados e infraestrutura
+## Stack e infraestrutura
 
-- PostgreSQL 16 em container Docker próprio no VPS, com imagem `postgres:16-alpine`, seguindo o padrão operacional do Orbit.
+- API: Node.js 22 + Fastify 5.
+- Banco: PostgreSQL 16 (postgres:16-alpine), em container Docker próprio.
+- Deploy: Docker Compose/Portainer, seguindo o padrão operacional do Orbit.
 - Banco, usuário, senha, volume e container exclusivos do Zailom Pay; não compartilhar instância nem credenciais com Orbit.
-- Backend do Zailom Pay acessa o PostgreSQL pela rede privada Docker. Não expor a porta do banco publicamente.
+- Backend acessa PostgreSQL pela rede privada pay_data_net. A porta do banco não é publicada no host.
+- Rede externa zailomOrbit_net conecta a API ao Traefik.
 - Não utilizar Supabase, Supabase Auth, Edge Functions, RLS ou tipos/funções exclusivos do Supabase.
-- Autenticação e autorização da API serão implementadas no backend; a estratégia de identidade entre produtos será definida antes dos endpoints de produção.
+- Autenticação e autorização serão implementadas no backend; a estratégia de identidade entre produtos será definida antes dos endpoints de produção.
+
+## Endereços e roteamento
+
+- pay.zailom.com: painel web.
+- api-pay.zailom.com: API pública.
+- Os dois hosts apontam inicialmente para o serviço Fastify. O painel inicial é apenas uma página de apresentação; a aplicação web será adicionada separadamente sem alterar o domínio da API.
+
+## Banco e migrações
+
+- O container PostgreSQL usa volume persistente zailom_pay_postgres_data.
+- A API executa migrações SQL versionadas na inicialização, sob advisory lock do PostgreSQL.
+- O histórico de migrações é mantido em zp_schema_migrations.
+- Segredos são configurados no Portainer como variáveis da stack; nunca devem ser versionados no Git.
 
 ## Modelo de integração
 
@@ -73,8 +89,7 @@ O ledger do Zailom é registro contábil e operacional. A guarda, liquidação e
 
 ## Decisões ainda abertas
 
-- Framework/backend e estratégia de deploy.
-- Provedor de autenticação e isolamento multi-tenant.
+- Estratégia de autenticação e identidade compartilhada entre produtos.
 - Contrato real da API Z2PAY: onboarding, recebedores, split, saldo, saque, antecipação, estornos e chargebacks.
 - Modelo de taxas Zailom permitido contratualmente.
 - Responsabilidades por saldo negativo, reservas e disputas.
