@@ -64,24 +64,31 @@ export async function bootstrapAdmin(pool, log) {
     return;
   }
 
-  // Do not re-hash the bootstrap password on every container restart.
-  // The account is intentionally not overwritten after its first creation.
+  const displayName = process.env.ADMIN_NAME?.trim() || "Administrador Zailom";
   const existing = await pool.query(
-    "select id from public.zp_auth_users where lower(email) = $1 limit 1",
+    "select id, password_hash from public.zp_auth_users where lower(email) = $1 limit 1",
     [email],
   );
-  if (existing.rowCount > 0) {
-    log.info({ email }, "Usuário superadmin inicial já existe; credenciais preservadas");
-    return;
-  }
 
-  if (password.length < 14) {
-    log.error("ADMIN_PASSWORD precisa ter pelo menos 14 caracteres; usuário inicial não foi criado");
+  if (existing.rowCount > 0) {
+    const user = existing.rows[0];
+    // The Portainer bootstrap variables are the recovery source for this
+    // first admin until a dedicated password-management flow is available.
+    const passwordMatches = await verifyPassword(password, user.password_hash);
+    if (!passwordMatches) {
+      const passwordHash = await hashPassword(password);
+      await pool.query(
+        "update public.zp_auth_users set password_hash = $1, display_name = $2, status = 'active', updated_at = now() where id = $3",
+        [passwordHash, displayName, user.id],
+      );
+      log.info({ email }, "Senha do administrador inicial sincronizada com as variáveis de implantação");
+    } else {
+      log.info({ email }, "Administrador inicial verificado");
+    }
     return;
   }
 
   const passwordHash = await hashPassword(password);
-  const displayName = process.env.ADMIN_NAME?.trim() || "Administrador Zailom";
   const result = await pool.query(
     `insert into public.zp_auth_users (email, password_hash, display_name, role)
      values ($1, $2, $3, 'superadmin')
@@ -92,7 +99,7 @@ export async function bootstrapAdmin(pool, log) {
   if (result.rowCount) {
     log.info({ email }, "Usuário superadmin inicial criado");
   } else {
-    log.info({ email }, "Usuário superadmin inicial já existe; nenhuma alteração realizada");
+    log.warn({ email }, "Outro cadastro com este e-mail foi criado durante o bootstrap; nenhuma alteração realizada");
   }
 }
 
