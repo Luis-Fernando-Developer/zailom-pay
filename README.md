@@ -65,7 +65,7 @@ O arquivo .env.example documenta as variáveis. Em Portainer, cadastre os valore
 - [x] API inicial do ledger: contas contábeis, consulta de lançamentos e postagem balanceada.
 - [x] Idempotência de lançamentos e bloqueio de alteração/exclusão do histórico contabilizado.
 - [x] Plano de contas compartilhado inicial em BRL.
-- [ ] Serviços de pagamentos, distribuição, recebíveis e saques.
+- [x] API administrativa de empresas, participantes e vínculos de beneficiários por provedor.\n- [ ] Serviços de pagamentos, distribuição, recebíveis e saques.
 - [ ] Simulador de provedor e adaptador Z2PAY.
 - [ ] Integração com Booking.
 
@@ -79,9 +79,18 @@ Todas as rotas abaixo exigem sessão autenticada. Escritas no ledger exigem perf
 - `GET /api/v1/admin/overview` — indicadores operacionais.
 - `GET /api/v1/admin/ledger/accounts` — plano de contas.
 - `POST /api/v1/admin/ledger/accounts` — cria conta contábil.
-- `GET /api/v1/admin/ledger/transactions` — consulta lançamentos contabilizados.
+- `GET /api/v1/admin/organizations` — lista empresas; aceita filtros `q` e `status`.\n- `POST /api/v1/admin/organizations` — cadastra empresa.\n- `PATCH /api/v1/admin/organizations/:id` — atualiza dados e status da empresa.\n- `GET /api/v1/admin/participants` — lista participantes; aceita `q`, `organizationId`, `status` e `kycStatus`.\n- `POST /api/v1/admin/participants` — cadastra participante vinculado opcionalmente a uma empresa.\n- `PATCH /api/v1/admin/participants/:id` — atualiza dados, status e etapa de KYC.\n- `GET /api/v1/admin/provider-recipients` — lista vínculos de beneficiários nos provedores.\n- `PUT /api/v1/admin/participants/:id/provider-recipient` — registra ou atualiza o identificador externo e os estados de onboarding/KYC do participante no provedor.\n- `GET /api/v1/admin/ledger/transactions` — consulta lançamentos contabilizados.
 - `POST /api/v1/admin/ledger/transactions` — registra uma transação contábil balanceada.
 
 O endpoint de transações exige `productCode`, `eventType`, `idempotencyKey` e pelo menos dois lançamentos. Cada lançamento informa `accountId`, `direction` (`debit` ou `credit`), `amountMinor` (centavos inteiros) e `currency`. Débitos e créditos devem fechar por moeda. Reutilizar uma chave de idempotência com conteúdo diferente retorna conflito HTTP 409.
 
 O plano de contas inicial cria contas compartilhadas em BRL para valores a liquidar pelo provedor, valores devidos aos participantes, receita de tarifas, despesas de tarifas e reembolsos a pagar. Essas contas são apenas estrutura contábil; não representam dinheiro custodiado ou disponível.
+
+
+## Empresas, participantes e beneficiários
+
+A API administrativa permite cadastrar empresas e participantes sem depender do provedor financeiro. O CPF/CNPJ é armazenado apenas com dígitos e o sistema exige 11 ou 14 dígitos; a validação de dígitos verificadores e a verificação documental/KYC ainda dependem do fluxo de compliance que será integrado.
+
+O vínculo com o provedor é separado do cadastro do participante. Cada participante pode ter um registro por provedor em `zp_provider_recipients`, com identificador externo, status de onboarding e status KYC. O endpoint apenas registra/sincroniza dados internos: não cria beneficiário no provedor nem inicia pagamentos.
+
+Todas as alterações administrativas são registradas em `zp_auth_audit`. Os endpoints de escrita exigem perfil `superadmin` ou `admin`. A interface visual de gestão dessas entidades será construída sobre essas rotas.
