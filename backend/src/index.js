@@ -10,6 +10,7 @@ import { registerLedgerRoutes } from "./ledger.js";
 import { registerEntityRoutes } from "./entities.js";
 import { registerWalletRoutes } from "./wallet.js";
 import { registerFeeRoutes } from "./fees.js";
+import { registerFeeManagementRoutes } from "./fee-management.js";
 
 const { Pool } = pg;
 const app = Fastify({
@@ -35,7 +36,7 @@ const pool = new Pool({
 
 async function runMigrations() {
   const currentDir = dirname(fileURLToPath(import.meta.url));
-  const migrations = ["001_financial_foundation", "002_authentication", "003_immutable_ledger_transactions", "004_seed_default_chart_of_accounts", "005_platform_wallet", "006_fee_rules"];
+  const migrations = ["001_financial_foundation", "002_authentication", "003_immutable_ledger_transactions", "004_seed_default_chart_of_accounts", "005_platform_wallet", "006_fee_rules", "007_hierarchical_fee_management"];
   const client = await pool.connect();
 
   try {
@@ -258,6 +259,7 @@ try {
   await registerEntityRoutes(app, pool);
   await registerWalletRoutes(app, pool);
   await registerFeeRoutes(app, pool);
+  await registerFeeManagementRoutes(app, pool);
   await app.listen({ port, host });
 } catch (error) {
   app.log.error({ err: error }, "Failed to start Zailom Pay");
