@@ -24,6 +24,13 @@ Núcleo financeiro do ecossistema Zailom. O objetivo é centralizar regras finan
 9. Ambiente de desenvolvimento/testes não deve movimentar dinheiro real.
 10. Regras regulatórias, contratuais e de KYC devem ser respeitadas; não presumir que ledger próprio substitui a estrutura regulada do parceiro.
 
+## Banco de dados e infraestrutura
+
+- PostgreSQL 16 em container Docker próprio no VPS, seguindo o padrão utilizado pelo Zailom Orbit.
+- Instância, volume, credenciais e ciclo de vida independentes do Orbit: Zailom Pay terá seu próprio banco e usuário de banco.
+- Não utilizar Supabase, Supabase Auth, Edge Functions ou recursos específicos do Supabase.
+- Backend próprio conectado ao PostgreSQL por rede privada Docker.
+
 ## Primeira fase
 
 - Definir arquitetura e contratos internos.
@@ -35,4 +42,4 @@ Núcleo financeiro do ecossistema Zailom. O objetivo é centralizar regras finan
 
 ## Estado atual
 
-Repositório recém-criado. A estrutura de aplicação e as migrações serão adicionadas em etapas, após validar a base técnica e os contratos internos.
+Repositório recém-criado. A estrutura de aplicação e as migrações PostgreSQL serão adicionadas em etapas, após validar a base técnica e os contratos internos.
