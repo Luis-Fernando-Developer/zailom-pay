@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { getCurrentUser } from "./auth.js";
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -107,6 +108,7 @@ export async function registerLedgerRoutes(app, pool) {
     const client = await pool.connect();
     try {
       await client.query("BEGIN");
+      await client.query("select pg_advisory_xact_lock(hashtext($1)::bigint)", [accountCode + ":" + currency + ":" + (participantId ?? "") + ":" + (productCode ?? "")]);
       let productId = null;
       if (productCode !== null) {
         const product = await client.query(
@@ -217,35 +219,49 @@ export async function registerLedgerRoutes(app, pool) {
     }
     if (entriesError) return reply.code(400).send({ error: entriesError });
 
+    const sourceType = typeof body.sourceType === "string" ? body.sourceType.slice(0, 80) : null;
+    const sourceId = typeof body.sourceId === "string" ? body.sourceId.slice(0, 160) : null;
+    const normalizedEntries = body.entries.map((entry) => ({
+      accountId: entry.accountId,
+      direction: entry.direction,
+      amountMinor: String(entry.amountMinor),
+      currency: entry.currency,
+      description: typeof entry.description === "string" ? entry.description.slice(0, 240) : null,
+    })).sort((a, b) => JSON.stringify(a).localeCompare(JSON.stringify(b)));
+    const requestHash = createHash("sha256").update(JSON.stringify({
+      productCode, eventType, organizationId, sourceType, sourceId, description,
+      entries: normalizedEntries,
+    })).digest("hex");
+
     const client = await pool.connect();
     try {
       await client.query("BEGIN");
       const inserted = await client.query(
         `insert into public.zp_ledger_transactions
-          (product_id, organization_id, event_type, idempotency_key, source_type, source_id, description)
-         select p.id, $2, $3, $4, $5, $6, $7
+          (product_id, organization_id, event_type, idempotency_key, source_type, source_id, description, metadata)
+         select p.id, $2, $3, $4, $5, $6, $7, $8::jsonb
            from public.zp_products p
           where p.code = $1 and p.active = true
          on conflict (idempotency_key) do nothing
          returning id, status, idempotency_key`,
         [
-          productCode,
-          organizationId,
-          eventType,
-          idempotencyKey,
-          typeof body.sourceType === "string" ? body.sourceType.slice(0, 80) : null,
-          typeof body.sourceId === "string" ? body.sourceId.slice(0, 160) : null,
-          description,
+          productCode, organizationId, eventType, idempotencyKey,
+          sourceType, sourceId, description,
+          JSON.stringify({ request_hash: requestHash }),
         ],
       );
 
       if (!inserted.rowCount) {
         const existing = await client.query(
-          "select id, status, idempotency_key from public.zp_ledger_transactions where idempotency_key = $1",
+          "select id, status, idempotency_key, metadata->>'request_hash' as request_hash from public.zp_ledger_transactions where idempotency_key = $1",
           [idempotencyKey],
         );
         if (existing.rowCount) {
           await client.query("COMMIT");
+          if (existing.rows[0].request_hash !== requestHash) {
+            return reply.code(409).send({ error: "Esta idempotencyKey já foi utilizada com dados diferentes." });
+          }
+          delete existing.rows[0].request_hash;
           return { transaction: existing.rows[0], alreadyProcessed: true };
         }
         await client.query("ROLLBACK");
