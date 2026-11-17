@@ -20,9 +20,28 @@ create table if not exists public.zp_fee_group_members (
 create index if not exists zp_fee_group_members_org_idx
   on public.zp_fee_group_members(organization_id);
 
--- An organization can belong to only one active commercial group per product.
-create unique index if not exists zp_fee_group_one_active_per_product_idx
-  on public.zp_fee_group_members(organization_id, (select product_id from public.zp_fee_groups where id = group_id));
+-- Enforce one active commercial group per organization and product.
+create or replace function public.zp_assert_fee_group_membership_unique()
+returns trigger language plpgsql as $
+declare v_product_id uuid;
+begin
+  select product_id into v_product_id from public.zp_fee_groups where id = new.group_id and active = true;
+  if v_product_id is not null and exists (
+    select 1 from public.zp_fee_group_members m
+    join public.zp_fee_groups g on g.id = m.group_id
+    where m.organization_id = new.organization_id
+      and g.product_id = v_product_id and g.active = true
+      and m.id <> coalesce(new.id, '00000000-0000-0000-0000-000000000000'::uuid)
+  ) then
+    raise exception 'Organization already belongs to an active fee group for this product';
+  end if;
+  return new;
+end;
+$;
+drop trigger if exists zp_fee_group_membership_unique on public.zp_fee_group_members;
+create trigger zp_fee_group_membership_unique
+before insert or update on public.zp_fee_group_members
+for each row execute function public.zp_assert_fee_group_membership_unique();
 
 create table if not exists public.zp_fee_group_rules (
   id uuid primary key default gen_random_uuid(),
