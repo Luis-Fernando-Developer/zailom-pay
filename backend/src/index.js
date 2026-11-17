@@ -116,37 +116,64 @@ app.get("/", async (_request, reply) => {
 
 
 app.get("/panel", async (_request, reply) => {
-  return reply.type("text/html; charset=utf-8").send(`<!doctype html>
+  return reply.type("text/html; charset=utf-8").send(\`<!doctype html>
 <html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Painel | Zailom Pay</title>
 <style>
 :root{color-scheme:dark;font-family:Inter,ui-sans-serif,system-ui;background:#090b10;color:#f4f6fb}
 *{box-sizing:border-box}body{margin:0;min-height:100vh;background:radial-gradient(ellipse at 15% 0%,#17332e 0,transparent 42%),#090b10}
-main{width:min(1080px,100%);margin:auto;padding:28px 22px}.brand{color:#8ee3c1;font-size:12px;font-weight:800;letter-spacing:.18em;text-transform:uppercase}
-header{display:flex;align-items:center;justify-content:space-between;padding:14px 0 30px}h1{font-size:clamp(30px,5vw,46px);letter-spacing:-.05em;margin:12px 0}p{color:#a8b0c0;line-height:1.6}
+main{width:min(1120px,100%);margin:auto;padding:28px 22px}.brand{color:#8ee3c1;font-size:12px;font-weight:800;letter-spacing:.18em;text-transform:uppercase}
+header{display:flex;align-items:center;justify-content:space-between;padding:14px 0 30px;gap:16px}h1{font-size:clamp(30px,5vw,46px);letter-spacing:-.05em;margin:12px 0}h2{font-size:18px;margin:0 0 16px}p{color:#a8b0c0;line-height:1.6}
 .card{border:1px solid #252d38;border-radius:20px;background:#111720;padding:26px;max-width:460px;margin:7vh auto}
 input{width:100%;padding:14px;margin:7px 0 13px;border-radius:10px;border:1px solid #35404d;background:#0b1017;color:#fff;font:inherit}
 button{border:0;border-radius:10px;padding:13px 18px;background:#8ee3c1;color:#092019;font-weight:800;cursor:pointer}
 button.secondary{background:#202a35;color:#e7edf5}.muted{color:#94a0b1;font-size:13px}.error{color:#ff9a9a;min-height:22px}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px;margin-top:24px}
-.tile{padding:22px;border:1px solid #252d38;border-radius:16px;background:#111720}.tile strong{display:block;margin-bottom:8px}.hidden{display:none}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px;margin:24px 0}
+.tile,.section{padding:22px;border:1px solid #252d38;border-radius:16px;background:#111720}.tile span{display:block}.metric{font-size:30px;font-weight:750;letter-spacing:-.04em;margin:12px 0 5px}
+.section{margin-top:18px}.section-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}
+.pill{display:inline-flex;padding:6px 9px;border-radius:999px;background:#332b19;color:#f2d49a;font-size:12px}
+.table-wrap{overflow:auto}table{width:100%;border-collapse:collapse;text-align:left;font-size:14px}th,td{padding:13px 10px;border-bottom:1px solid #252d38;white-space:nowrap}th{color:#94a0b1;font-weight:600}td{color:#e7edf5}.empty{padding:22px;color:#94a0b1;text-align:center}
+.hidden{display:none}.identity{margin-top:24px}.refresh{font-size:13px;color:#8ee3c1}
+@media(max-width:560px){main{padding:18px 14px}header{padding-bottom:20px}.tile,.section{padding:17px}}
 </style></head><body><main>
 <header><div><div class="brand">Zailom Financial</div><div class="muted">Console administrativo</div></div><button id="logout" class="secondary hidden">Sair</button></header>
 <section id="login" class="card"><div class="brand">Acesso restrito</div><h1>Entrar no Pay</h1><p>Use as credenciais administrativas configuradas para esta instância.</p>
 <form id="loginForm"><label for="email">E-mail</label><input id="email" type="email" autocomplete="username" required>
 <label for="password">Senha</label><input id="password" type="password" autocomplete="current-password" required>
 <button type="submit">Entrar</button><div id="error" class="error" role="alert"></div></form></section>
-<section id="dashboard" class="hidden"><div class="brand">Visão geral</div><h1>Bem-vindo, <span id="name">administrador</span>.</h1><p>O ambiente administrativo está autenticado. Os módulos financeiros serão liberados conforme forem implementados.</p>
-<div class="grid"><div class="tile"><strong>Contas e empresas</strong><span class="muted">Estrutura preparada na base de dados.</span></div><div class="tile"><strong>Ledger</strong><span class="muted">Fundação contábil criada; operações ainda não habilitadas.</span></div><div class="tile"><strong>Provedores</strong><span class="muted">Integração Z2PAY será conectada após definição do contrato e API.</span></div></div>
-<p class="muted" id="identity"></p></section></main>
+<section id="dashboard" class="hidden">
+<div class="brand">Visão geral</div><h1>Bem-vindo, <span id="name">administrador</span>.</h1>
+<p>Resumo operacional do ecossistema financeiro Zailom.</p>
+<div class="section-head"><span class="pill">Modo seguro · movimentação real desativada</span><span class="refresh" id="updated"></span></div>
+<div class="grid">
+<div class="tile"><span class="muted">Empresas cadastradas</span><div class="metric" id="orgTotal">—</div><span class="muted" id="orgActive">Carregando...</span></div>
+<div class="tile"><span class="muted">Participantes</span><div class="metric" id="participantTotal">—</div><span class="muted" id="kycPending">Carregando...</span></div>
+<div class="tile"><span class="muted">Lançamentos no ledger</span><div class="metric" id="ledgerTotal">—</div><span class="muted" id="ledgerPosted">Carregando...</span></div>
+<div class="tile"><span class="muted">Repasses pendentes</span><div class="metric" id="payoutPending">—</div><span class="muted" id="payoutTotal">Carregando...</span></div>
+<div class="tile"><span class="muted">Eventos de provedores</span><div class="metric" id="eventsTotal">—</div><span class="muted" id="eventsPending">Carregando...</span></div>
+</div>
+<div class="section"><div class="section-head"><h2>Atividade recente do ledger</h2><span class="muted">Últimos 8 registros</span></div>
+<div class="table-wrap"><table><thead><tr><th>Evento</th><th>Descrição</th><th>Status</th><th>Data</th></tr></thead><tbody id="recentRows"><tr><td colspan="4" class="empty">Carregando...</td></tr></tbody></table></div></div>
+<p class="muted identity" id="identity"></p><div id="dashboardError" class="error" role="alert"></div>
+</section></main>
 <script>
 const login=document.querySelector("#login"),dashboard=document.querySelector("#dashboard"),logout=document.querySelector("#logout"),error=document.querySelector("#error");
 async function api(path,options={}){const response=await fetch(path,{...options,credentials:"same-origin",headers:{"content-type":"application/json",...(options.headers||{})}});const data=await response.json().catch(()=>({}));if(!response.ok)throw new Error(data.error||"Não foi possível concluir a operação.");return data}
-function show(user){login.classList.add("hidden");dashboard.classList.remove("hidden");logout.classList.remove("hidden");document.querySelector("#name").textContent=user.displayName;document.querySelector("#identity").textContent=user.email+" · "+user.role}
-document.querySelector("#loginForm").addEventListener("submit",async event=>{event.preventDefault();error.textContent="";try{const result=await api("/api/v1/auth/login",{method:"POST",body:JSON.stringify({email:document.querySelector("#email").value,password:document.querySelector("#password").value})});show(result.user)}catch(err){error.textContent=err.message}});
-logout.addEventListener("click",async()=>{await api("/api/v1/auth/logout",{method:"POST"});dashboard.classList.add("hidden");login.classList.remove("hidden");logout.classList.add("hidden")});
-api("/api/v1/auth/me").then(result=>show(result.user)).catch(()=>{});
-</script></body></html>`);
+function escapeHtml(value){return String(value??"—").replace(/[&<>"']/g,function(char){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[char]})}
+function show(user){login.classList.add("hidden");dashboard.classList.remove("hidden");logout.classList.remove("hidden");document.querySelector("#name").textContent=user.displayName;document.querySelector("#identity").textContent=user.email+" · "+user.role;loadOverview()}
+async function loadOverview(){const errorBox=document.querySelector("#dashboardError");errorBox.textContent="";try{const data=await api("/api/v1/admin/overview");document.querySelector("#orgTotal").textContent=data.organizations.total;document.querySelector("#orgActive").textContent=data.organizations.active+" ativas";
+document.querySelector("#participantTotal").textContent=data.participants.total;document.querySelector("#kycPending").textContent=data.participants.kyc_pending+" com KYC pendente";
+document.querySelector("#ledgerTotal").textContent=data.ledger.total;document.querySelector("#ledgerPosted").textContent=data.ledger.posted+" contabilizados · "+data.ledger.draft+" em rascunho";
+document.querySelector("#payoutPending").textContent=data.payouts.pending;document.querySelector("#payoutTotal").textContent=data.payouts.total+" solicitações no total";
+document.querySelector("#eventsTotal").textContent=data.providerEvents.total;document.querySelector("#eventsPending").textContent=data.providerEvents.unprocessed+" aguardando processamento";
+document.querySelector("#updated").textContent="Atualizado "+new Date(data.generatedAt).toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"});
+const rows=data.recentTransactions.map(function(item){return "<tr><td>"+escapeHtml(item.event_type)+"</td><td>"+escapeHtml(item.description)+"</td><td>"+escapeHtml(item.status)+"</td><td>"+escapeHtml(new Date(item.created_at).toLocaleString("pt-BR"))+"</td></tr>"}).join("");
+document.querySelector("#recentRows").innerHTML=rows||'<tr><td colspan="4" class="empty">Nenhuma movimentação registrada ainda.</td></tr>';
+}catch(err){errorBox.textContent="Não foi possível carregar os indicadores: "+err.message}}
+document.querySelector("#loginForm").addEventListener("submit",async function(event){event.preventDefault();error.textContent="";try{const result=await api("/api/v1/auth/login",{method:"POST",body:JSON.stringify({email:document.querySelector("#email").value,password:document.querySelector("#password").value})});show(result.user)}catch(err){error.textContent=err.message}});
+logout.addEventListener("click",async function(){await api("/api/v1/auth/logout",{method:"POST"});dashboard.classList.add("hidden");login.classList.remove("hidden");logout.classList.add("hidden")});
+api("/api/v1/auth/me").then(function(result){show(result.user)}).catch(function(){});
+</script></body></html>\`);
 });
 
 app.get("/health", async (_request, reply) => {
