@@ -32,7 +32,7 @@ const pool = new Pool({
 
 async function runMigrations() {
   const currentDir = dirname(fileURLToPath(import.meta.url));
-  const migrations = ["001_financial_foundation", "002_authentication"];
+  const migrations = ["001_financial_foundation", "002_authentication", "003_immutable_ledger_transactions"];
   const client = await pool.connect();
 
   try {
