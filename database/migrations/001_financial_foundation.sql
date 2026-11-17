@@ -148,7 +148,7 @@ returns trigger
 language plpgsql
 security definer
 set search_path = public
-as $
+as $$
 declare
   v_old_status public.zp_transaction_status;
   v_new_status public.zp_transaction_status;
@@ -176,7 +176,7 @@ begin
 
   return old;
 end;
-$;
+$$;
 
 drop trigger if exists zp_ledger_entries_immutable on public.zp_ledger_entries;
 create trigger zp_ledger_entries_immutable
