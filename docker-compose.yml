@@ -13,6 +13,9 @@ services:
       TRUST_PROXY: "true"
       APP_ORIGIN: ${APP_ORIGIN:-https://pay.zailom.com}
       API_PUBLIC_URL: ${API_PUBLIC_URL:-https://api-pay.zailom.com}
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}
+      ADMIN_NAME: ${ADMIN_NAME:-Administrador Zailom}
       PGHOST: postgres
       PGPORT: 5432
       PGUSER: ${POSTGRES_USER:-zailom_pay}
